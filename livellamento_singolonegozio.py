@@ -124,8 +124,7 @@ if uploaded_file is not None:
                 (group['Avanzamento'] > soglia_min_riceventi) &
                 (group['valore'] > 0) &
                 (group['Avanzamento'] > 0) &
-                (group['ST Adj'] != 0) &
-                (group['Area Manager'] == area_manager)
+                (group['ST Adj'] != 0)
             )
 
             riceventi = (group[filtro_riceventi]
