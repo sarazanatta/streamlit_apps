@@ -165,57 +165,6 @@ if uploaded_file is not None:
                 data=output.getvalue(), 
                 file_name="piano_livellamento_zona.xlsx", 
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-
-            # --- OUTPUT RISULTATI ---
-        if log_trasferimenti:
-            df_output = pd.DataFrame(log_trasferimenti)
-            
-            st.success(f"✅ Analisi conclusa con successo!")
-            
-            # --- NUOVA SEZIONE: KPI TOTALI ---
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.metric("Totale Trasferimenti", f"{len(df_output)}")
-            with col_b:
-                valore_totale = df_output['Valore Trasferito (€)'].sum()
-                st.metric("Valore Totale Spostato", f"{valore_totale:,.2f} €")
-
-            st.divider()
-
-            # --- NUOVA SEZIONE: TABELLA RIASSUNTIVA PER AREA MANAGER ---
-            st.subheader("📊 Riepilogo per Area Manager")
-            
-            # Creiamo una pivot table che somma il valore trasferito per ogni Area
-            riepilogo_area = (
-                df_output.groupby('Area Manager')['Valore Trasferito (€)']
-                .agg(['sum', 'count'])
-                .rename(columns={'sum': 'Totale Valore (€)', 'count': 'Num. Operazioni'})
-                .sort_values(by='Totale Valore (€)', ascending=False)
-            )
-            
-            # Visualizziamo la tabella di riepilogo
-            st.table(riepilogo_area) 
-
-            st.divider()
-
-            # --- DETTAGLIO COMPLETO ---
-            st.subheader("📑 Dettaglio Completo Piano Trasferimenti")
-            st.dataframe(df_output, use_container_width=True)
-
-            # Generazione Excel per Download
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df_output.to_excel(writer, index=False, sheet_name='Piano_Livellamento')
-                # Aggiungiamo anche il foglio di riepilogo nell'Excel
-                riepilogo_area.to_excel(writer, sheet_name='Riepilogo_Aree')
-            
-            st.download_button(
-                label="📥 Scarica Risultati in Excel", 
-                data=output.getvalue(), 
-                file_name="piano_livellamento_zona.xlsx", 
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
             )
         else:
             st.warning("⚠️ Nessun trasferimento trovato. Prova ad abbassare il 'Limite minimo' o a rendere meno stringenti le soglie di avanzamento.")
