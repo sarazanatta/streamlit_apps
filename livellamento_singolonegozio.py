@@ -115,7 +115,7 @@ if uploaded_file is not None:
         testo_progresso = st.empty()
         barra_progresso = st.progress(0)
 
-        for i, ((area, dept, apc), group) in enumerate(gruppi):
+        for i, ((dept, apc), group) in enumerate(gruppi):
             # Update UI
             testo_progresso.markdown(f"⏳ Analisi nel reparto: `{dept}` per l' Area Manager: **{area}**")
             barra_progresso.progress((i + 1) / totale_gruppi)
