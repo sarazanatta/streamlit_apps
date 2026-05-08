@@ -179,9 +179,6 @@ if uploaded_file is not None:
             # --- DETTAGLIO COMPLETO ---
             st.subheader("📑 Dettaglio Completo Piano Trasferimenti")
             st.dataframe(df_output, use_container_width=True) 
-            # Tabella interattiva
-            st.subheader("Anteprima Piano Trasferimenti")
-            st.dataframe(df_output, use_container_width=True)
 
             # Generazione Excel per Download
             output = BytesIO()
