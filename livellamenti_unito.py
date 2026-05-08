@@ -54,7 +54,7 @@ limite_minimo = st.sidebar.slider(
     min_value=0, max_value=2000, value=300, step=25
 )
 
-max_riceventi = st.sidebar.number_input("Num. Max Riceventi per gruppo", 1, 50, 10)
+max_riceventi = st.sidebar.number_input("Num. Max Riceventi per gruppo", 1, 20, 5)
 
 if modalita == "Totale Rete":
     max_cedenti = st.sidebar.number_input("Num. Max Cedenti per gruppo", 1, 20, 5)
@@ -64,7 +64,7 @@ if modalita == "Totale Rete":
     st.title("⚖️ LIVELLAMENTI PER ZONA (Totale Rete)")
     descrizione = "Ottimizzazione stock tra tutti i punti vendita della stessa area/reparto/apc."
 else:
-    st.title("🏢 LIVELLAMENTO SINGOLO NEGOZIO (HUB)")
+    st.title("🏢 LIVELLAMENTO SINGOLO NEGOZIO")
     descrizione = f"Distribuzione stock in eccesso dal negozio {codice_hub} verso i riceventi della stessa area."
 
 st.markdown(f"### {descrizione}")
