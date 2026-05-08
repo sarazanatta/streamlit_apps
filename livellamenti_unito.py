@@ -19,27 +19,27 @@ st.set_page_config(page_title="LIVELLAMENTI STOCK", page_icon="⚖️", layout="
 st.sidebar.header("⚙️ Configurazione Analisi")
 modalita = st.sidebar.radio(
     "Ambito dell'analisi:",
-    ("Totale Rete", "Singolo Negozio (HUB)")
+    ("Totale Rete", "Singolo Negozio")
 )
 
 st.sidebar.divider()
 
 # --- 3. PARAMETRI DINAMICI NELLA SIDEBAR ---
-if modalita == "Singolo Negozio (HUB)":
-    st.sidebar.subheader("Parametri Negozio HUB")
+if modalita == "Singolo Negozio":
+    st.sidebar.subheader("Parametri Negozio")
     codice_hub = st.sidebar.number_input(
         "Codice Negozio (Cedente)",
-        min_value=0, max_value=9999, value=1562,
+        min_value=0, max_value=9999, value=0,
         help="Questo negozio sarà l'unico a cedere merce verso la sua stessa area."
     )
     soglia_max_cedente = st.sidebar.slider(
-        "Soglia Max Avanzamento HUB",
+        "Soglia Max Avanzamento",
         min_value=0.0, max_value=1.5, value=0.85, step=0.05
     )
 else:
     st.sidebar.subheader("Parametri Rete")
     soglia_max_cedente = st.sidebar.slider(
-        "Soglia Max Cedenti (chi ha troppo)",
+        "Soglia Max avanzamento cedenti",
         min_value=0.0, max_value=1.5, value=0.85, step=0.05
     )
 
