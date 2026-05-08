@@ -27,7 +27,8 @@ with st.expander("📂 REQUISITI DEL FILE EXCEL (TEMPLATE)"):
         "Store code": ["S001","S002"], "Avanzamento": [0.75, 0.98], "valore": [-500.00, +750.00], "ST Adj": [0.50, 0.70]
     }
     st.table(pd.DataFrame(template_data))
-    
+    st.write("I negozi con valore <0 (ovvero con ST minore della media), saranno possibili cedenti; viceversa, quelli con valore positivo, saranna possibili riceventi.")
+    st.write("⚠️ Attenzione che un negozio, per essere classificato come cedente o ricevente deve anche rispettare i parametri configurati a sinistra.")
     # Bottone per scaricare il template vuoto
     template_buffer = BytesIO()
     with pd.ExcelWriter(template_buffer, engine='openpyxl') as writer:
