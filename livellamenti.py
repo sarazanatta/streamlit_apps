@@ -23,8 +23,8 @@ with st.expander("📂 REQUISITI DEL FILE EXCEL (TEMPLATE)"):
     
     # Esempio visivo
     template_data = {
-        "Area Manager": ["Mario Rossi"], "Dept code": [123], "apc": ["A1"],
-        "Store code": ["S001"], "Avanzamento": [0.75], "valore": [-500.00], "ST Adj": [1]
+        "Area Manager": ["Mario Rossi", "Mario Rossi"], "Dept code": [123, 123], "apc": ["A1","A1"],
+        "Store code": ["S001","S002"], "Avanzamento": [0.75, 0.98], "valore": [-500.00, +750.00], "ST Adj": [0.50, 0.70]
     }
     st.table(pd.DataFrame(template_data))
     
