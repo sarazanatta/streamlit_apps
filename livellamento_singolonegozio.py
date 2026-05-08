@@ -18,12 +18,12 @@ Questo strumento è progettato per svuotare uno specifico **Negozio** (cedente f
 colonne_necessarie = ['Area Manager', 'Dept code', 'apc', 'Avanzamento', 'valore', 'ST Adj', 'Store code']
 
 with st.expander("🚨 REQUISITI DEL FILE EXCEL"):
-    st.write("⚠️ **Attenzione:** Il file deve contenere esattamente queste colonne:")
+    st.write("⚠️ **Attenzione:** Il file deve contenere esattamente queste colonne (non necessariamente in questo ordine):")
     
     # Esempio visivo
     template_data = {
-        "Area Manager": ["Luca Bianchi"], "Dept code": [101], "apc": ["Z1"],
-        "Store code": [1562], "Avanzamento": [0.80], "valore": [-1200.00], "ST Adj": [1]
+        "Area Manager": ["Luca Bianchi"],"Store code": [1562], "Dept code": [101], "apc": ["Z1"],
+         "Avanzamento": [0.80], "ST Adj": [1], "valore": [-1200.00]
     }
     st.table(pd.DataFrame(template_data))
     
@@ -35,7 +35,7 @@ with st.expander("🚨 REQUISITI DEL FILE EXCEL"):
     st.download_button(
         label="📥 Scarica Template Excel",
         data=template_buffer.getvalue(),
-        file_name="template_hub.xlsx",
+        file_name="template.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
