@@ -4,20 +4,20 @@ import numpy as np
 from io import BytesIO
 
 # --- CONFIGURAZIONE PAGINA ---
-st.set_page_config(page_title="LIVELLAMENTO DA HUB", page_icon="🏢", layout="wide")
+st.set_page_config(page_title="LIVELLAMENTO SINGOLO NEGOZIO", page_icon="🏢", layout="wide")
 
-st.title("🏢 LIVELLAMENTO DA NEGOZIO HUB")
+st.title("🏢 LIVELLAMENTO SINGOLO NEGOZIO")
 
 # --- DESCRIZIONE ---
 st.markdown("""
 ### Descrizione del Programma
-Questo strumento è progettato per svuotare uno specifico **Negozio HUB** (cedente fisso) distribuendo il suo stock in eccesso verso i negozi della stessa area/reparto che hanno le performance migliori (riceventi).
+Questo strumento è progettato per svuotare uno specifico **Negozio** (cedente fisso) distribuendo il suo stock in eccesso verso i negozi della stessa area/reparto che hanno le performance migliori (riceventi), all'interno della stessa zona
 """)
 
 # --- SEZIONE REQUISITI FILE (TEMPLATE) ---
 colonne_necessarie = ['Area Manager', 'Dept code', 'apc', 'Avanzamento', 'valore', 'ST Adj', 'Store code']
 
-with st.expander("🚨 REQUISITI DEL FILE EXCEL (LEGGIMI)"):
+with st.expander("🚨 REQUISITI DEL FILE EXCEL"):
     st.write("⚠️ **Attenzione:** Il file deve contenere esattamente queste colonne:")
     
     # Esempio visivo
@@ -47,7 +47,7 @@ st.sidebar.header("⚙️ Parametri Hub & Controllo")
 # 1. Selezione Negozio Hub
 codice_hub = st.sidebar.number_input(
     "Codice Negozio HUB (Cedente)", 
-    min_value=1, max_value=9999, value=1562,
+    min_value=1, max_value=9999, value=0,
     help="Questo negozio sarà l'unico a cedere merce."
 )
 
@@ -61,8 +61,8 @@ limite_minimo = st.sidebar.slider(
 st.sidebar.subheader("Soglie di Avanzamento")
 soglia_max_hub = st.sidebar.slider(
     "Soglia Max Avanzamento HUB", 
-    min_value=0.0, max_value=1.5, value=0.95, step=0.05,
-    help="L'Hub cede merce solo se il suo avanzamento è sotto questo valore."
+    min_value=0.0, max_value=1.5, value=0.85, step=0.05,
+    help="L'ente cede merce solo se il suo avanzamento è sotto questo valore."
 )
 
 soglia_min_riceventi = st.sidebar.slider(
@@ -80,7 +80,7 @@ max_riceventi = st.sidebar.number_input(
 # --- SPIEGAZIONE DEI PARAMETRI ---
 with st.expander("ℹ️ Come questi valori influenzano il risultato"):
     st.write(f"""
-    * 🚨 **Negozio Hub ({codice_hub}):** Il sistema cercherà questo codice in ogni Area/Reparto. Se lo trova e ha valore negativo, inizierà a distribuire.
+    * 🚨 **Negozio ({codice_hub}):** Il sistema cercherà questo codice in ogni Area/Reparto. Se lo trova e ha valore negativo, inizierà a distribuire.
     * 💰 **Limite minimo ({limite_minimo}€):** Non verranno suggeriti spostamenti sotto questa cifra.
     * 📈 **Soglia Riceventi ({soglia_min_riceventi}):** Più è alta, più il sistema sarà 'aggressivo' nel mandare merce solo a chi sta vendendo tantissimo.
     """)
