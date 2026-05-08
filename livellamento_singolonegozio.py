@@ -46,8 +46,8 @@ st.sidebar.header("⚙️ Parametri Hub & Controllo")
 
 # 1. Selezione Negozio Hub
 codice_hub = st.sidebar.number_input(
-    "Codice Negozio HUB (Cedente)", 
-    min_value=1, max_value=9999, value=0,
+    "Codice Negozio (Cedente)", 
+    min_value=0, max_value=9999, value=0,
     help="Questo negozio sarà l'unico a cedere merce."
 )
 
