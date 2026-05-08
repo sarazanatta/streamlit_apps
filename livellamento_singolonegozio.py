@@ -93,7 +93,7 @@ if uploaded_file is not None:
     colonne_necessarie = ['Area Manager', 'Dept code', 'apc', 'Avanzamento', 'valore', 'ST Adj', 'Store code']
 
     if not all(col in df.columns for col in colonne_necessarie):
-        st.error(f"🚨 **ERRORE:** Colonne mancanti! Il file deve avere: {colonne_necessarie}")
+        st.error(f"🚨 **ERRORE:** Colonne mancanti! Il file deve avere almeno le seguenti colonne: {colonne_necessarie}")
     else:
         # --- LOGICA PER IDENTIFICARE L'AREA MANAGER DELL'HUB ---
         info_hub = df.loc[df['Store code'] == codice_hub, 'Area Manager'].unique()
@@ -191,23 +191,23 @@ if uploaded_file is not None:
             
             # KPI
             c1, c2 = st.columns(2)
-            c1.metric("Num. Negozi Aiutati", len(df_output['Store Ricevente'].unique()))
+            c1.metric("Num. negozi riceventi", len(df_output['Store Ricevente'].unique()))
             c2.metric("Valore Totale Distribuito", f"{df_output['Valore Trasferito (€)'].sum():,.2f} €")
 
             # Tabella Riepilogo Aree
-            st.subheader("📊 Riepilogo Svuotamento HUB per Area")
+            st.subheader("📊 Riepilogo Smistamento per Area")
             riepilogo = df_output.groupby('Area Manager')['Valore Trasferito (€)'].agg(['sum', 'count']).rename(columns={'sum': 'Valore Totale (€)', 'count': 'Num. Negozi'})
             st.table(riepilogo)
 
             # Dettaglio
-            st.subheader("📑 Dettaglio Trasferimenti HUB")
+            st.subheader("📑 Dettaglio Trasferimenti")
             st.dataframe(df_output, use_container_width=True)
 
             # Download
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df_output.to_excel(writer, index=False, sheet_name='Piano_negozio')
+                df_output.to_excel(writer, index=False, sheet_name='smistamento')
             
             st.download_button("📥 Scarica Risultati", output.getvalue(), f"livellamento_{codice_hub}.xlsx")
         else:
-            st.warning(f"⚠️ Nessun match trovato: il negozio {codice_hub} non può cedere merce o non ci sono riceventi che superano la soglia del {soglia_min_riceventi*100}%.")
+            st.warning(f"⚠️ Nessun match trovato: il negozio {codice_hub} non può cedere merce o non ci sono riceventi che superano la soglia del {soglia_min_riceventi*100}%. Provare a modificare i parametri in input")
