@@ -21,18 +21,18 @@ st.sidebar.header("Parametri di Controllo")
 # 1. Limite minimo economico
 limite_minimo = st.sidebar.slider(
     "Limite minimo trasferimento (€)", 
-    min_value=0, max_value=1000, value=300, step=50
+    min_value=0, max_value=2000, value=300, step=25
 )
 
 # 2. Soglie Avanzamento
 soglia_cedenti = st.sidebar.slider(
     "Soglia Max Avanzamento Cedenti (chi ha troppo)", 
-    min_value=0.0, max_value=1.0, value=0.85, step=0.05
+    min_value=0.0, max_value=1.5, value=0.85, step=0.05
 )
 
 soglia_riceventi = st.sidebar.slider(
     "Soglia Min Avanzamento Riceventi (chi ha poco)", 
-    min_value=0.0, max_value=1.0, value=0.95, step=0.05
+    min_value=0.0, max_value=1.5, value=0.95, step=0.05
 )
 
 # 3. Numero Max Negozi
@@ -50,9 +50,9 @@ max_riceventi = st.sidebar.number_input(
 with st.expander("ℹ️ Come questi valori influenzano il risultato"):
     st.write(f"""
     * **Limite minimo ({limite_minimo}€):** Impedisce trasferimenti troppo piccoli (es. spostare 10€ di merce non conviene per i costi di logistica).
-    * **Soglia Cedenti ({soglia_cedenti}):** Più è bassa, più il programma è "selettivo": considererà cedenti solo i negozi con pochissime vendite rispetto allo stock.
-    * **Soglia Riceventi ({soglia_riceventi}):** Più è alta, più il programma cercherà di aiutare solo chi è in vera emergenza stock.
-    * **Max Cedenti/Riceventi:** Limita il numero di negozi coinvolti per ogni Area/Dept. Utile per non frammentare troppo le spedizioni.
+    * **Soglia Cedenti ({soglia_cedenti}):** Più è bassa, più il codice è "selettivo": considererà cedenti solo i negozi con avanzamenti molto bassi rispetto alle previsioni
+    * **Soglia Riceventi ({soglia_riceventi}):** Più è alta, più il codice seleziona solo negozi con avanzamenti molto alti rispetto alle previsioni di vendita
+    * **Max Cedenti/Riceventi:** Limita il numero di negozi coinvolti per ogni Area/Dept/APC (consigliato circa 5). 
     """)
 
 # --- LOGICA APPLICATIVA ---
