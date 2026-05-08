@@ -100,6 +100,7 @@ if uploaded_file is not None:
         
         if len(info_hub) == 0:
             st.error(f"❌ Il codice negozio {codice_hub} non è stato trovato nel file. Impossibile procedere.")
+            area_manager_hub = 0
         else:
             area_manager_hub = info_hub[0]
             st.info(f"📍 Negozio trovato! Area Manager di riferimento: **{area_manager_hub}**")
