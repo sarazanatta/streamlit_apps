@@ -163,7 +163,7 @@ if uploaded_file is not None:
 
                     if quantita_trasferita >= limite_minimo:
                         log_trasferimenti.append({
-                            'Area Manager': area, 'Dept code': dept, 'apc': apc,
+                            'Area Manager': area_manager_hub, 'Dept code': dept, 'apc': apc,
                             'Store HUB (Cedente)': cedente['Store code'],
                             'Avanzamento HUB': round(cedente['Avanzamento'], 2),
                             'Store Ricevente': ricevente['Store code'],
@@ -203,7 +203,7 @@ if uploaded_file is not None:
             # Download
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df_output.to_excel(writer, index=False, sheet_name='Piano_HUB')
+                df_output.to_excel(writer, index=False, sheet_name='Piano_negozio')
             
             st.download_button("📥 Scarica Risultati", output.getvalue(), f"livellamento_{codice_hub}.xlsx")
         else:
