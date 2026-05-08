@@ -117,7 +117,7 @@ if uploaded_file is not None:
 
         for i, ((dept, apc), group) in enumerate(gruppi):
             # Update UI
-            testo_progresso.markdown(f"⏳ Analisi nel reparto: `{dept}` per l' Area Manager: **{area}**")
+            testo_progresso.markdown(f"⏳ Analisi nel reparto: `{dept}` per l' Area Manager: **{area_manager_hub}**")
             barra_progresso.progress((i + 1) / totale_gruppi)
 
             # 1. Selezione Cedente (Solo l'HUB impostato)
