@@ -90,14 +90,25 @@ uploaded_file = st.file_uploader("Carica il file Excel per il livellamento inter
 
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file, header=0)
-    
+    colonne_necessarie = ['Area Manager', 'Dept code', 'apc', 'Avanzamento', 'valore', 'ST Adj', 'Store code']
+
     if not all(col in df.columns for col in colonne_necessarie):
         st.error(f"🚨 **ERRORE:** Colonne mancanti! Il file deve avere: {colonne_necessarie}")
     else:
+        # --- LOGICA PER IDENTIFICARE L'AREA MANAGER DELL'HUB ---
+        info_hub = df.loc[df['Store code'] == codice_hub, 'Area Manager'].unique()
+        
+        if len(info_hub) == 0:
+            st.error(f"❌ Il codice negozio {codice_hub} non è stato trovato nel file. Impossibile procedere.")
+        else:
+            area_manager_hub = info_hub[0]
+            st.info(f"📍 Negozio trovato! Area Manager di riferimento: **{area_manager_hub}**")
+            st.caption("Il sistema considererà solo i riceventi appartenenti a questa area.")
+
         log_trasferimenti = []
         
         # Gruppi
-        gruppi = list(df.groupby(['Area Manager', 'Dept code', 'apc']))
+        gruppi = list(df.groupby(['Dept code', 'apc']))
         totale_gruppi = len(gruppi)
         area_manager = df.loc[df['Store code'] == codice_hub, 'Area Manager']
         
@@ -121,6 +132,7 @@ if uploaded_file is not None:
             # 2. Selezione Riceventi
             filtro_riceventi = (
                 (group['Store code'] != codice_hub) &
+                (group['Area Manager'] == area_manager_hub) &
                 (group['Avanzamento'] > soglia_min_riceventi) &
                 (group['valore'] > 0) &
                 (group['Avanzamento'] > 0) &
