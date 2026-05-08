@@ -42,7 +42,7 @@ with st.expander("🚨 REQUISITI DEL FILE EXCEL"):
 st.divider()
 
 # --- SIDEBAR: PARAMETRI INTERATTIVI ---
-st.sidebar.header("⚙️ Parametri Hub & Controllo")
+st.sidebar.header("⚙️ Parametri negozio & controllo")
 
 # 1. Selezione Negozio Hub
 codice_hub = st.sidebar.number_input(
@@ -60,7 +60,7 @@ limite_minimo = st.sidebar.slider(
 # 3. Soglie Avanzamento
 st.sidebar.subheader("Soglie di Avanzamento")
 soglia_max_hub = st.sidebar.slider(
-    "Soglia Max Avanzamento HUB", 
+    "Soglia Max Avanzamento", 
     min_value=0.0, max_value=1.5, value=0.85, step=0.05,
     help="L'ente cede merce solo se il suo avanzamento è sotto questo valore."
 )
@@ -80,13 +80,13 @@ max_riceventi = st.sidebar.number_input(
 # --- SPIEGAZIONE DEI PARAMETRI ---
 with st.expander("ℹ️ Come questi valori influenzano il risultato"):
     st.write(f"""
-    * 🚨 **Negozio ({codice_hub}):** Il sistema cercherà questo codice in ogni Area/Reparto. Se lo trova e ha valore negativo, inizierà a distribuire.
+    * 🚨 **Negozio ({codice_hub}):** Il sistema cercherà questo codice in ogni Area/Reparto/APC. Se lo trova e ha valore negativo, inizierà a distribuire.
     * 💰 **Limite minimo ({limite_minimo}€):** Non verranno suggeriti spostamenti sotto questa cifra.
     * 📈 **Soglia Riceventi ({soglia_min_riceventi}):** Più è alta, più il sistema sarà 'aggressivo' nel mandare merce solo a chi sta vendendo tantissimo.
     """)
 
 # --- CARICAMENTO FILE E LOGICA ---
-uploaded_file = st.file_uploader("Carica il file Excel per il livellamento Hub", type=["xlsx"])
+uploaded_file = st.file_uploader("Carica il file Excel per il livellamento interzona", type=["xlsx"])
 
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file, header=0)
@@ -99,13 +99,14 @@ if uploaded_file is not None:
         # Gruppi
         gruppi = list(df.groupby(['Area Manager', 'Dept code', 'apc']))
         totale_gruppi = len(gruppi)
+        area_manager = df.loc[df['Store code'] == codice_hub, 'Area Manager']
         
         testo_progresso = st.empty()
         barra_progresso = st.progress(0)
 
         for i, ((area, dept, apc), group) in enumerate(gruppi):
             # Update UI
-            testo_progresso.markdown(f"⏳ Analisi HUB nel reparto: `{dept}` | Area: **{area}**")
+            testo_progresso.markdown(f"⏳ Analisi nel reparto: `{dept}` per l' Area Manager: **{area}**")
             barra_progresso.progress((i + 1) / totale_gruppi)
 
             # 1. Selezione Cedente (Solo l'HUB impostato)
@@ -123,7 +124,8 @@ if uploaded_file is not None:
                 (group['Avanzamento'] > soglia_min_riceventi) &
                 (group['valore'] > 0) &
                 (group['Avanzamento'] > 0) &
-                (group['ST Adj'] != 0)
+                (group['ST Adj'] != 0) &
+                (group['Area Manager'] == area_manager)
             )
 
             riceventi = (group[filtro_riceventi]
@@ -171,7 +173,7 @@ if uploaded_file is not None:
         if log_trasferimenti:
             df_output = pd.DataFrame(log_trasferimenti)
             
-            st.success(f"✅ Distribuzione dall'HUB {codice_hub} completata!")
+            st.success(f"✅ Distribuzione dall'ente {codice_hub} completata!")
             
             # KPI
             c1, c2 = st.columns(2)
@@ -192,6 +194,6 @@ if uploaded_file is not None:
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 df_output.to_excel(writer, index=False, sheet_name='Piano_HUB')
             
-            st.download_button("📥 Scarica Risultati Hub", output.getvalue(), f"piano_HUB_{codice_hub}.xlsx")
+            st.download_button("📥 Scarica Risultati", output.getvalue(), f"livellamento_{codice_hub}.xlsx")
         else:
             st.warning(f"⚠️ Nessun match trovato: il negozio {codice_hub} non può cedere merce o non ci sono riceventi che superano la soglia del {soglia_min_riceventi*100}%.")
