@@ -3,17 +3,44 @@ import pandas as pd
 import numpy as np
 from io import BytesIO
 
-# --- CONFIGURAZIONE PAGINA ---
+# 1. CONFIGURAZIONE E TITOLO
 st.set_page_config(page_title="LIVELLAMENTI PER ZONA", page_icon="⚖️", layout="wide")
-
 st.title("⚖️ LIVELLAMENTI PER ZONA")
 
-# --- DESCRIZIONE ---
+# 2. DESCRIZIONE GENERALE
 st.markdown("""
 ### Descrizione del Programma
 Questo strumento ottimizza i livelli di stock tra punti vendita della stessa area/reparto/apc.
-Il sistema identifica chi ha merce in eccesso e chi è in rottura di stock, suggerendo il trasferimento ideale.
 """)
+
+# --- INSERISCI QUI I NUOVI BLOCCHI ---
+
+# 3. SEZIONE REQUISITI FILE (TEMPLATE)
+colonne_necessarie = ['Area Manager', 'Dept code', 'apc', 'Avanzamento', 'valore', 'ST Adj', 'Store code']
+
+with st.expander("📂 REQUISITI DEL FILE EXCEL (TEMPLATE)"):
+    st.write("Il file caricato deve contenere esattamente queste colonne:")
+    
+    # Esempio visivo
+    template_data = {
+        "Area Manager": ["Mario Rossi"], "Dept code": [123], "apc": ["A1"],
+        "Store code": ["S001"], "Avanzamento": [0.75], "valore": [-500.00], "ST Adj": [1]
+    }
+    st.table(pd.DataFrame(template_data))
+    
+    # Bottone per scaricare il template vuoto
+    template_buffer = BytesIO()
+    with pd.ExcelWriter(template_buffer, engine='openpyxl') as writer:
+        pd.DataFrame(columns=colonne_necessarie).to_excel(writer, index=False)
+    
+    st.download_button(
+        label="📥 Scarica Template Excel vuoto",
+        data=template_buffer.getvalue(),
+        file_name="template_livellamento.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+st.divider() # Una linea sottile di separazione
 
 # --- SIDEBAR: PARAMETRI INTERATTIVI ---
 st.sidebar.header("⚙️ Parametri di Controllo")
@@ -58,37 +85,7 @@ with st.expander("ℹ️ Come questi parametri influenzano il risultato"):
     * **Soglia Riceventi ({soglia_riceventi}):** Più è alta, più il codice si concentra solo su chi è in forte carenza.
     * **Max Cedenti/Riceventi:** Limita la complessità dell'operazione per ogni singolo reparto (consigliato: 5).
     """)
-# --- SEZIONE REQUISITI FILE ---
-with st.expander("📂 Requisiti del file Excel (Template)"):
-    st.write("Il file caricato deve contenere esattamente queste colonne con questi nomi:")
-    
-    # Creiamo un esempio del formato richiesto
-    template_data = {
-        "Area Manager": ["Nome Cognome", "Nome Cognome"],
-        "Dept code": [123, 456],
-        "apc": ["A1", "B2"],
-        "Store code": ["S001", "S002"],
-        "Avanzamento": [0.75, 1.10],
-        "valore": [-500.00, 800.00],
-        "ST Adj": [1, 1]
-    }
-    template_df = pd.DataFrame(template_data)
-    
-    # Mostriamo la tabella statica
-    st.table(template_df)
-    
-    st.info("💡 **Nota Bene:** La colonna 'Avanzamento' deve essere in formato numerico (es. 0.85 per 85%) e la colonna 'valore' deve avere segno negativo per i potenziali cedenti.")
-    # Genera un file Excel vuoto con solo le intestazioni
-    template_buffer = BytesIO()
-    with pd.ExcelWriter(template_buffer, engine='openpyxl') as writer:
-        pd.DataFrame(columns=colonne_necessarie).to_excel(writer, index=False)
-    
-    st.download_button(
-        label="📥 Scarica Excel d'esempio (Template)",
-        data=template_buffer.getvalue(),
-        file_name="template_livellamento.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+
 # --- CARICAMENTO FILE ---
 uploaded_file = st.file_uploader("Carica il file Excel", type=["xlsx"])
 
