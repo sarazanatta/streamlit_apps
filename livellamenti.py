@@ -55,13 +55,13 @@ limite_minimo = st.sidebar.slider(
 # 2. Soglie Avanzamento
 st.sidebar.subheader("Soglie di Avanzamento")
 soglia_cedenti = st.sidebar.slider(
-    "Soglia Max Cedenti (chi ha troppo)", 
+    "Soglia Max Cedenti", 
     min_value=0.0, max_value=1.5, value=0.85, step=0.05,
     help="I negozi sotto questa soglia sono considerati potenziali cedenti."
 )
 
 soglia_riceventi = st.sidebar.slider(
-    "Soglia Min Riceventi (chi ha poco)", 
+    "Soglia Min Riceventi", 
     min_value=0.0, max_value=1.5, value=0.95, step=0.05,
     help="I negozi sopra questa soglia sono considerati potenziali riceventi."
 )
