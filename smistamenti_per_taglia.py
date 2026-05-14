@@ -153,8 +153,8 @@ def optimize_global_picking(df_req, df_db):
 
 # --- INTERFACCIA STREAMLIT ---
 st.sidebar.header("📁 Caricamento File")
-file_req = st.sidebar.file_uploader("1. Carica Richiesta (Articolo, XS, S...)", type=['xlsx'])
-file_db = st.sidebar.file_uploader("2. Carica DB Stock (Articolo, Negozio, XS, S...)", type=['xlsx'])
+file_req = st.sidebar.file_uploader("1. Carica Richiesta", type=['xlsx'])
+file_db = st.sidebar.file_uploader("2. Carica DB Stock", type=['xlsx'])
 
 if file_req and file_db:
     df_req = pd.read_excel(file_req)
