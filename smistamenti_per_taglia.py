@@ -9,7 +9,43 @@ st.set_page_config(page_title="Ottimizzatore Globale Smistamento", page_icon="�
 
 st.title("🎯 Ottimizzatore Globale (Minimo numero di Enti)")
 st.markdown("L'algoritmo seleziona prioritariamente i negozi che possono evadere il maggior numero di articoli/taglie diversi contemporaneamente.")
+# --- SEZIONE TEMPLATE / ESEMPI ---
+st.info("💡 Assicurati che i file abbiano le intestazioni corrette come mostrato negli esempi qui sotto.")
 
+col_t1, col_t2 = st.columns(2)
+
+with col_t1:
+    with st.expander("Visualizza esempio File RICHIESTA"):
+        st.markdown("**Il file deve contenere queste colonne esatte:**")
+        esempio_req = pd.DataFrame({
+            'COD ARTICOLO': ['ART001', 'ART002'],
+            'XS': [1, 0],
+            'S': [2, 1],
+            'M': [0, 2],
+            'L': [5, 0],
+            'XL': [0, 1],
+            'XXL': [1, 0]
+        })
+        st.dataframe(esempio_req, hide_index=True)
+        st.caption("Nota: Inserisci 0 o lascia vuoto dove non c'è richiesta.")
+
+with col_t2:
+    with st.expander("Visualizza esempio File DB STOCK"):
+        st.markdown("**Il file deve contenere queste colonne esatte:**")
+        esempio_db = pd.DataFrame({
+            'COD ARTICOLO': ['ART001', 'ART001', 'ART002'],
+            'NEGOZIO': ['NEG_MILANO', 'NEG_ROMA', 'NEG_MILANO'],
+            'XS': [10, 5, 2],
+            'S': [8, 12, 0],
+            'M': [15, 3, 10],
+            'L': [20, 0, 5],
+            'XL': [5, 5, 8],
+            'XXL': [2, 1, 0]
+        })
+        st.dataframe(esempio_db, hide_index=True)
+        st.caption("Nota: Il DB deve avere una riga per ogni combinazione Articolo/Negozio.")
+
+st.markdown("---")
 def optimize_global_picking(df_req, df_db):
     size_cols = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
     
