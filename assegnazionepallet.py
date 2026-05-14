@@ -14,7 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- FUNZIONI DI UTILITÀ ---
+# --- FUNZIONI DI UTILITÀ (Ottimizzate) ---
 @st.cache_data
 def convert_df_to_excel(df):
     output = BytesIO()
@@ -23,60 +23,104 @@ def convert_df_to_excel(df):
     return output.getvalue()
 
 def clean_st_dataframe(uploaded_file):
-    """Pulisce e normalizza il DataFrame ST mantenendo la logica originale."""
     df = pd.read_excel(uploaded_file, header=0)
-    # Estrazione numeri colonne (celle 2, 5, 8...)
     numeri_colonne = df.iloc[0, 1::3].values
     nuove_intestazioni = ['Des Negozio']
-    
     for numero in numeri_colonne:
         nuove_intestazioni.extend([
             f"{numero} Somma di Total Delivered",
             f"{numero} Somma di Total Sales",
             f"{numero} Media di ST value"
         ])
-    
     df.columns = nuove_intestazioni
-    # Drop righe tecniche originali
     df = df.drop(index=[0, 1]).reset_index(drop=True)
     df = df.dropna(subset=["Des Negozio"])
     return df.fillna(0)
 
 def ensure_all_shops_present(df_target, shop_list):
-    """Ottimizzazione: aggiunge i negozi mancanti in un colpo solo invece di un loop."""
     missing_shops = list(set(shop_list) - set(df_target['Des Negozio']))
     if missing_shops:
-        new_rows = pd.DataFrame({'Des Negozio': missing_shops}).fillna(0)
+        new_rows = pd.DataFrame({'Des Negozio': missing_shops})
         df_target = pd.concat([df_target, new_rows], ignore_index=True)
     return df_target.fillna(0)
 
 # --- UI PRINCIPALE ---
-st.title("📦 Sistema di Assegnazione Pallet")
+st.title("📦 Sistema di Assegnazione Pallet (un pallet per negozio con eventuale riassegnazione dei pallet mancanti)")
 st.markdown("---")
 
 if 'df_results' not in st.session_state:
     st.session_state.df_results = None
 
-# --- SIDEBAR ---
+# --- SIDEBAR CON TUTTI GLI HELP ORIGINALI ---
 st.sidebar.header("📁 Caricamento File")
-uploaded_st = st.sidebar.file_uploader("Tabella ST (Excel)", type=['xlsx', 'xls'])
-uploaded_avanzamenti = st.sidebar.file_uploader("Tabella AVANZAMENTI (Excel)", type=['xlsx', 'xls'])
-uploaded_prelievi = st.sidebar.file_uploader("File PRELIEVI (Excel)", type=['xlsx', 'xls'])
-uploaded_stock = st.sidebar.file_uploader("File STOCK (Excel)", type=['xlsx', 'xls'])
+
+uploaded_st = st.sidebar.file_uploader(
+    "Carica tabella ST (Excel)",
+    type=['xlsx', 'xls'],
+    help="File contenente i dati dei negozi con Total Delivered, Total Sales e ST value"
+)
+
+uploaded_avanzamenti = st.sidebar.file_uploader(
+    "Carica tabella AVANZAMENTI (Excel)",
+    type=['xlsx', 'xls'],
+    help="File contenente i dati degli avanzamenti per negozio"
+)
+
+uploaded_prelievi = st.sidebar.file_uploader(
+    "Carica file PRELIEVI (Excel)",
+    type=['xlsx', 'xls'],
+    help="File contenente gli ID_PRELIEVO e le funzioni"
+)
+
+uploaded_stock = st.sidebar.file_uploader(
+    "Carica file STOCK (Excel)",
+    type=['xlsx', 'xls'],
+    help="File contenente i dati dello stock per negozio"
+)
 
 st.sidebar.header("⚙️ Parametri")
-I1 = st.sidebar.slider("I1 - Peso media ponderata (%)", 0, 100, 70)
+
+I1 = st.sidebar.slider(
+    "I1 - Peso media ponderata (%)",
+    min_value=0,
+    max_value=100,
+    value=70,
+    help="Importanza della media ponderata nel calcolo finale"
+)
+
 I2 = 100 - I1
-st.sidebar.info(f"I2 - Peso media avanzamenti: {I2}% (calcolato come 100-I1")
+st.sidebar.write(f"I2 - Peso media avanzamenti (%): {I2}")
 
-alpha = st.sidebar.slider("Alpha (α)", 0.0, 1.0, 0.7, 0.05)
-soglia_delivered = st.sidebar.number_input("Soglia Total Delivered", min_value=0.0, value=100000.0)
-soglia_mult = st.sidebar.slider("Moltiplicatore riassegnazione", 1.0, 10.0, 2.0, 0.1)
+alpha = st.sidebar.slider(
+    "Alpha (α)",
+    min_value=0.0,
+    max_value=1.0,
+    value=0.7,
+    step=0.05,
+    help="Parametro per il calcolo del punteggio P"
+)
 
-# --- LOGICA DI PROCESSAMENTO ---
+soglia_delivered = st.sidebar.number_input(
+    "Soglia Total Delivered",
+    min_value=0.0,
+    value=100000.0,
+    step=100.0,
+    help="Soglia minima per il totale delivered dei negozi"
+)
+
+soglia_massima_moltiplicatore = st.sidebar.slider(
+    "Moltiplicatore soglia massima per riassegnazione",
+    min_value=1.0,
+    max_value=10.0,
+    value=2.0,
+    step=0.1,
+    help="Il valore massimo assegnabile per negozio sarà: valore_max_pallet * questo moltiplicatore"
+)
+
+# --- LOGICA DI ELABORAZIONE ---
 if all([uploaded_st, uploaded_avanzamenti, uploaded_prelievi, uploaded_stock]):
     try:
-        # Caricamento e pulizia rapida
+        # Caricamento e preparazione dati
         df_negozi = clean_st_dataframe(uploaded_st)
         all_shops = df_negozi['Des Negozio'].unique()
 
@@ -84,31 +128,35 @@ if all([uploaded_st, uploaded_avanzamenti, uploaded_prelievi, uploaded_stock]):
         df_prelievi = pd.read_excel(uploaded_prelievi).fillna(0)
         df_stock = ensure_all_shops_present(pd.read_excel(uploaded_stock), all_shops)
 
-        # Pre-calcolo Valore Totale Prelievi
         df_prelievi['Valore Totale'] = df_prelievi.drop(columns=['ID_PRELIEVO']).sum(axis=1)
 
-        # Filtro Negozi Validi (Vettorizzato)
-        delivered_cols = [c for c in df_negozi.columns if "Total Delivered" in c]
-        df_negozi['Total_Delivered_Sum'] = df_negozi[delivered_cols].sum(axis=1)
-        df_negozi_validi = df_negozi[df_negozi['Total_Delivered_Sum'] >= soglia_delivered].copy()
-        
-        # Dizionari per accesso rapido (O(1) invece di O(n) nei loop)
-        negozi_map = df_negozi_validi.set_index('Des Negozio').to_dict('index')
+        # Dizionari per accesso ultra-rapido O(1)
+        negozi_map = df_negozi.set_index('Des Negozio').to_dict('index')
         avanzamenti_map = df_avanzamenti.set_index('Des Negozio').to_dict('index')
         stock_map = df_stock.set_index('Des Negozio').to_dict('index')
         
-        st.success("✅ File pronti per l'elaborazione")
-        
+        # Filtro negozi validi basato sulla soglia delivered
+        delivered_cols = [c for c in df_negozi.columns if "Total Delivered" in c]
+        df_negozi['Total_Delivered_Sum'] = df_negozi[delivered_cols].sum(axis=1)
+        lista_negozi_validi = df_negozi[df_negozi['Total_Delivered_Sum'] >= soglia_delivered]['Des Negozio'].tolist()
+
+        # Anteprima
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("📊 Anteprima Dati Negozi")
+            st.dataframe(df_negozi.head(), use_container_width=True)
+        with col2:
+            st.subheader("📦 Anteprima Prelievi")
+            st.dataframe(df_prelievi.head(), use_container_width=True)
+
         if st.button("🚀 Avvia Assegnazione Pallet", type="primary", use_container_width=True):
             results = []
             negozi_assegnati = set()
-            valori_assegnati = {n: 0 for n in negozi_map.keys()}
+            valori_assegnati = {n: 0 for n in lista_negozi_validi}
             
-            # Progress bar
             pb = st.progress(0)
             total_rows = len(df_prelievi)
 
-            # --- LOOP ASSEGNAZIONE PRIMARIA ---
             for idx, row in df_prelievi.iterrows():
                 pb.progress((idx + 1) / total_rows)
                 
@@ -116,35 +164,32 @@ if all([uploaded_st, uploaded_avanzamenti, uploaded_prelievi, uploaded_stock]):
                 val_tot = row['Valore Totale']
                 f_cols = [c for c in row.index if c not in ['ID_PRELIEVO', 'Valore Totale'] and row[c] > 0]
                 
-                # Check funzioni esistenti
+                # Check funzioni
                 f_missing = [f for f in f_cols if f"{f} Somma di Total Delivered" not in df_negozi.columns]
                 if len(f_missing) == len(f_cols):
                     results.append([id_pre, "Nessun negozio disponibile (TUTTE FUNZIONI NON PRESENTI)", 0, 0, 0, 0, 0, ",".join(map(str, f_missing)), val_tot])
                     continue
                 
                 f_valid = [f for f in f_cols if f not in f_missing]
-                candidati = []
-
-                # Calcolo stock totale funzioni per il pallet (per ps)
+                
+                # Calcolo stock totale per ps (vettorizzato)
                 stk_tot_f = sum(df_stock[str(f)].sum() if str(f) in df_stock.columns else 0 for f in f_valid)
 
-                for neg, n_data in negozi_map.items():
+                candidati = []
+                for neg in lista_negozi_validi:
                     if neg in negozi_assegnati: continue
                     
-                    # Controllo Delivered > 0 per tutte le funzioni del pallet
+                    n_data = negozi_map[neg]
                     if all(n_data.get(f"{f} Somma di Total Delivered", 0) > 0 for f in f_valid):
-                        # 1. Media Ponderata ST
-                        t_w_st, t_del = 0, 0
-                        for f in f_valid:
-                            d_val = n_data[f"{f} Somma di Total Delivered"]
-                            t_w_st += n_data[f"{f} Media di ST value"] * d_val
-                            t_del += d_val
+                        # Media Ponderata
+                        t_w_st = sum(n_data[f"{f} Media di ST value"] * n_data[f"{f} Somma di Total Delivered"] for f in f_valid)
+                        t_del = sum(n_data[f"{f} Somma di Total Delivered"] for f in f_valid)
                         m_pond = t_w_st / t_del if t_del > 0 else 0
                         
-                        # 2. Media Avanzamenti
+                        # Media Avanzamenti
                         m_avz = np.mean([avanzamenti_map[neg].get(f, 0) for f in f_valid])
                         
-                        # 3. Combinata e Score
+                        # Combinata e Score
                         m_comb = (I1 * m_pond + I2 * m_avz) / 100
                         stk_neg = sum(stock_map[neg].get(f, 0) for f in f_valid)
                         ps = stk_neg / stk_tot_f if stk_tot_f > 0 else 0
@@ -167,8 +212,8 @@ if all([uploaded_st, uploaded_avanzamenti, uploaded_prelievi, uploaded_stock]):
             # --- RIASSEGNAZIONE ---
             non_ass = df_res[df_res["Negozio Assegnato"] == "Nessun negozio disponibile"]
             if not non_ass.empty:
-                soglia_max = df_prelievi['Valore Totale'].max() * soglia_mult
-                st.info(f"🔄 Riassegnazione... Soglia: {soglia_max:.2f}")
+                soglia_max = df_prelievi['Valore Totale'].max() * soglia_massima_moltiplicatore
+                st.info(f"🔄 Riassegnazione... Soglia massima: {soglia_max:.2f}")
                 
                 riass_ok = set()
                 for idx, row in non_ass.iterrows():
@@ -176,8 +221,9 @@ if all([uploaded_st, uploaded_avanzamenti, uploaded_prelievi, uploaded_stock]):
                     stk_tot_f = sum(df_stock[str(f)].sum() if str(f) in df_stock.columns else 0 for f in f_list)
                     
                     candidati_r = []
-                    for neg, n_data in negozi_map.items():
+                    for neg in lista_negozi_validi:
                         if (valori_assegnati[neg] + row['Valore Totale'] <= soglia_max) and (neg not in riass_ok):
+                            n_data = negozi_map[neg]
                             if all(n_data.get(f"{f} Somma di Total Delivered", 0) > 0 for f in f_list):
                                 m_pond = sum(n_data[f"{f} Media di ST value"] * n_data[f"{f} Somma di Total Delivered"] for f in f_list) / sum(n_data[f"{f} Somma di Total Delivered"] for f in f_list)
                                 m_avz = np.mean([avanzamenti_map[neg].get(f, 0) for f in f_list])
@@ -196,28 +242,53 @@ if all([uploaded_st, uploaded_avanzamenti, uploaded_prelievi, uploaded_stock]):
             st.session_state.df_results = df_res
 
     except Exception as e:
-        st.error(f"Errore: {e}")
+        st.error(f"Errore nel processamento: {str(e)}")
         st.stop()
 
 # --- DISPLAY RISULTATI ---
 if st.session_state.df_results is not None:
     res = st.session_state.df_results
     total = len(res)
-    unassigned = len(res[res["Negozio Assegnato"].str.contains("Nessun", na=False)])
-    assigned = total - unassigned
+    pallet_non_assegnati = res[res["Negozio Assegnato"] == "Nessun negozio disponibile"]
+    assigned = total - len(pallet_non_assegnati)
+    
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Totale Pallet", total)
+    col2.metric("Pallet Assegnati", assigned)
+    col3.metric("Pallet Non Assegnati", len(pallet_non_assegnati))
+    col4.metric("Tasso di Assegnazione", f"{(assigned/total)*100:.1f}%" if total > 0 else "0%")
 
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Totale Pallet", total)
-    m2.metric("Assegnati", assigned)
-    m3.metric("Non Assegnati", unassigned)
-    m4.metric("Rate", f"{(assigned/total)*100:.1f}%")
-
-    st.subheader("📋 Risultati")
+    st.subheader("📋 Risultati Assegnazione")
     st.dataframe(res, use_container_width=True)
     
-    st.download_button("📥 Scarica Excel", convert_df_to_excel(res), "risultati.xlsx", use_container_width=True)
+    st.download_button(
+        label="📥 Scarica Risultati (Excel)",
+        data=convert_df_to_excel(res),
+        file_name="risultati_assegnazione.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True
+    )
 
-    if unassigned > 0:
-        st.warning("⚠️ Alcuni pallet non sono stati assegnati per mancanza di negozi idonei o superamento soglie.")
+    # Messaggi di allerta finali
+    if not pallet_non_assegnati.empty:
+        st.warning("⚠️ Alcuni pallet rimangono ancora non assegnati dopo la riassegnazione automatica")
+        with st.expander("Visualizza pallet ancora non assegnati"):
+            st.dataframe(pallet_non_assegnati, use_container_width=True)
+
+    senza_funzioni = res[res["Negozio Assegnato"].str.contains("TUTTE FUNZIONI NON PRESENTI", na=False)]
+    if not senza_funzioni.empty:
+        st.error("ATTENZIONE: ancora presenti pallet non assegnati (presenti pallet con tutte funzioni non presenti)")
 else:
-    st.info("👆 Carica i file per iniziare.")
+    st.info("👆 Carica tutti i file richiesti nella barra laterale per iniziare")
+    st.subheader("📋 File Richiesti")
+    file_requirements = {
+        "Tabella ST": "Contiene dati dei negozi con colonne Total Delivered, Total Sales e ST value",
+        "Tabella AVANZAMENTI": "Contiene dati degli avanzamenti per ogni negozio",
+        "File PRELIEVI": "Contiene ID_PRELIEVO e codici funzione per ogni pallet",
+        "File STOCK": "Contiene dati dello stock disponibile per negozio"
+    }
+    for f_name, desc in file_requirements.items():
+        st.write(f"**{f_name}**: {desc}")
+
+st.markdown("---")
+st.markdown("*Sistema di Assegnazione Pallet - Versione Web App con Riassegnazione Automatica*")
