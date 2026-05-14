@@ -25,7 +25,7 @@ with col_t1:
         'L': [5, 0], 'XL': [0, 1], 'XXL': [1, 0]
     })
     st.dataframe(esempio_req, hide_index=True, use_container_width=True)
-    st.info("💡 Questo file elenca cosa ti serve togliere dagli enti.")
+    st.info("💡 Questo file elenca la richiesta da soddisfare")
 
 with col_t2:
     st.markdown("### 2. File DB STOCK")
@@ -38,7 +38,7 @@ with col_t2:
         'L': [20, 0, 5], 'XL': [5, 5, 8], 'XXL': [2, 1, 0]
     })
     st.dataframe(esempio_db, hide_index=True, use_container_width=True)
-    st.info("💡 Questo file elenca dove si trova la merce attualmente.")
+    st.info("💡 Questo file è il db dello stock per negozio/articolo")
 
 st.markdown("---")
 def optimize_global_picking(df_req, df_db):
