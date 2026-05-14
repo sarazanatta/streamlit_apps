@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 
 # --- CONFIGURAZIONE PAGINA ---
 st.set_page_config(
-    page_title="Pallet Assignment System",
+    page_title="Assegnazione pallet",
     page_icon="📦",
     layout="wide"
 )
