@@ -1,0 +1,15 @@
+[theme]
+# Il colore primario per i pulsanti attivi, le barre di selezione e gli accenti (Giallo)
+primaryColor = "#FFD700"
+
+# Il colore di sfondo della pagina principale (Blu Scuro)
+backgroundColor = "#0A192F"
+
+# Il colore di sfondo della barra laterale (un blu leggermente diverso per fare contrasto)
+secondaryBackgroundColor = "#172A45"
+
+# Il colore del testo principale (Bianco/Fango chiaro per massima leggibilità su sfondo scuro)
+textColor = "#F8F9FA"
+
+# La font dell'app (opzioni: "sans serif", "serif", "monospace")
+font = "sans serif"
