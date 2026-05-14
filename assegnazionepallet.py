@@ -67,7 +67,7 @@ uploaded_stock = st.sidebar.file_uploader("File STOCK (Excel)", type=['xlsx', 'x
 st.sidebar.header("⚙️ Parametri")
 I1 = st.sidebar.slider("I1 - Peso media ponderata (%)", 0, 100, 70)
 I2 = 100 - I1
-st.sidebar.info(f"I2 - Peso media avanzamenti: {I2}%")
+st.sidebar.info(f"I2 - Peso media avanzamenti: {I2}% (calcolato come 100-I1")
 
 alpha = st.sidebar.slider("Alpha (α)", 0.0, 1.0, 0.7, 0.05)
 soglia_delivered = st.sidebar.number_input("Soglia Total Delivered", min_value=0.0, value=100000.0)
