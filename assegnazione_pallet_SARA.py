@@ -7,12 +7,12 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 # Configurazione pagina Streamlit
 st.set_page_config(
-    page_title="Algoritmo di Assegnazione Pallet",
+    page_title="Algoritmo di assegnazione SARA",
     page_icon="📦",
     layout="wide"
 )
 
-st.title("📦 Algoritmo di Assegnazione Pallet Ottimizzato")
+st.title("📦 Algoritmo di Assegnazione SARA")
 st.markdown("""
 Questa applicazione automatizza la distribuzione dei prelievi/pallet verso i punti vendita 
 utilizzando un modello decisionale basato su performance storica (Sell Through), avanzamenti e pressione dello stock.
