@@ -124,7 +124,7 @@ if file_st and file_avanzamenti and file_pallet and file_stock:
         for codice in codici_funzione:
             deliv = n_data.get(f"{codice} Somma di Total Delivered", 0)
             st_val = n_data.get(f"{codice} Media di ST value", 0)
-            if deliv >= 0:
+            if deliv > 0:
                 total_weighted_st += st_val * deliv
                 total_delivered += deliv
 
@@ -167,7 +167,7 @@ if file_st and file_avanzamenti and file_pallet and file_stock:
             for n in negozi_list:
                 if conteggio_assegnazioni[n] < ASSEGNAZIONI and (valori_caricati[n] + valore_totale <= SOGLIA_MASSIMA):
                     n_data = negozi_dict[n]
-                    if all(n_data.get(f"{c} Somma di Total Delivered", 0) >= 0 for c in funzioni_valide):
+                    if all(n_data.get(f"{c} Somma di Total Delivered", 0) >0 for c in funzioni_valide):
                         res_p = get_punteggio_veloce(n, funzioni_valide)
                         candidati.append((n, *res_p))
 
