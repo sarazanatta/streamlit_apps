@@ -7,7 +7,7 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 # Configurazione pagina Streamlit
 st.set_page_config(
-    page_title="Algoritmo di assegnazione SARA",
+    page_title="SARA",
     page_icon="📦",
     layout="wide"
 )
