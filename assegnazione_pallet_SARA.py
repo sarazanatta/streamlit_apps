@@ -43,7 +43,7 @@ ASSEGNAZIONI = st.sidebar.number_input("Max Pallet per Negozio", min_value=1, ma
 
 st.sidebar.header("💶 3. Soglie Economiche")
 soglia_delivered = st.sidebar.number_input("Soglia Minima Delivered", min_value=0.0, value=100.0, step=10.0)
-SOGLIA_MASSIMA = st.sidebar.number_input("Capacità Max Valore (€)", min_value=0.0, value=12100.0, step=500.0)
+SOGLIA_MASSIMA = st.sidebar.number_input("Capacità Max Valore (€)", min_value=0.0, value=10000.0, step=500.0)
 
 
 # --- FUNZIONI DI ELABORAZIONE DATI ---
