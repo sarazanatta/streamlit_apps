@@ -12,15 +12,25 @@ st.set_page_config(
 st.title("📦 App Assegnazione Pallet ai Negozi")
 st.markdown("Carica i file Excel **Negozi (Avanzamenti)** e **Pallet** per elaborare l'assegnazione automatica in base alla compatibilità e affinità.")
 
-# --- Sezione Informativa Struttura e Template File ---
-with st.expander("ℹ️ **Requisiti e Template Struttura File Excel (Doppia Intestazione)**", expanded=False):
+# --- Sezione Informativa Struttura, Ruolo Negozio e Template File ---
+with st.expander("ℹ️ **Ruolo del Negozio, Requisiti e Template Struttura File Excel**", expanded=False):
+    
+    # Breve descrizione della funzione del negozio nel sistema
+    st.markdown("""
+    **🏬 Ruolo e Funzione del Negozio nell'App:**
+    * **Ricettore di Capacità:** Il negozio (`EnteBox`) rappresenta il punto vendita o magazzino finale destinato a ricevere i pallet.
+    * **Verifica Compatibilità:** Un negozio viene considerato *idoneo* solo se le sue disponibilità residue per ciascuna categoria sono **pari o superiori** ai volumi richiesti dal pallet.
+    * **Algoritmo di Affinità:** Tra tutti i negozi idonei, l'app sceglie il negozio con il **punteggio di affinità più alto** (calcolato tramite prodotto scalare tra volumi negozio e volumi pallet).
+    * **Assegnazione Univoca:** Una volta che un negozio viene assegnato a un pallet, viene rimosso dal pool dei negozi liberi per evitare sovra-assegnazioni.
+    """)
+    
+    st.divider()
     st.write("Entrambi i file **devono avere 2 righe di intestazione (Header su Righe 1 e 2)** per definire le categorie composte (es. `31_40`).")
     
     col_info1, col_info2 = st.columns(2)
     
     with col_info1:
         st.markdown("### 📄 Template File Negozi (`avanzamenti.xlsx`)")
-        # Ricostruzione visiva dell'header multilivello
         header_n = pd.MultiIndex.from_tuples([
             ("EnteBox", ""),
             ("31", "40"),
@@ -71,7 +81,7 @@ def assegna_pallet_finale(file_negozi, file_pallet):
                 nuove_cols.append(l1)
             else:
                 nuove_cols.append(f"{l0}_{l1}")
-        df.columns = me_cols = nuove_cols
+        df.columns = nuove_cols
         return df
 
     df_n = prepara_colonne(df_n, 'EnteBox')
@@ -168,11 +178,10 @@ if uploaded_negozi is not None and uploaded_pallet is not None:
                 st.markdown("**Tabella Risultati:**")
                 st.dataframe(df_risultato, use_container_width=True)
 
-            with tab3 if 'tab3' in locals() else tab2:
+            with tab2:
                 st.subheader("Scarica il File finale")
                 st.write("Puoi scaricare il file Excel generato pronto per l'uso.")
 
-                # Generazione file Excel in memoria per il download
                 buffer = io.BytesIO()
                 with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                     df_risultato.to_excel(writer, index=False, sheet_name='Assegnazione')
