@@ -4,13 +4,13 @@ import io
 
 # Configurazione della pagina
 st.set_page_config(
-    page_title="Assegnazione Pallet",
+    page_title="Indisponibile SARA",
     page_icon="📦",
     layout="wide"
 )
 
 st.title("📦 App Assegnazione e Riassegnazione Pallet")
-st.markdown("Carica i file Excel **Esclusi** e **Dati** per elaborare le assegnazioni e riassegnazioni automatiche dei pallet.")
+st.markdown("Carica i file Excel **Esclusi** e **Dati** per elaborare le assegnazioni e riassegnazioni automatiche dei pallet indisponibili.")
 
 # --- Sezione Informativa Struttura File ---
 with st.expander("ℹ️ **Requisiti e Struttura delle colonne per i file Excel**", expanded=False):
