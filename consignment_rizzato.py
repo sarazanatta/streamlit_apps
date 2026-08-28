@@ -82,114 +82,114 @@ if uploaded_esclusi is not None and uploaded_dati is not None:
                     st.metric("Totale Righe Dati", len(df_dati))
                 with col2:
                     st.metric("ID Prelievo Unici", df_dati['ID_PRELIEVO'].nunique())
+with tab2:
+    st.subheader("1. Prima Assegnazione")
+    
+    # Raggruppa i dati
+    df_grouped = df_dati.groupby(['ID_PRELIEVO', 'ENTE_EMIT', 'DES_ENTE'])['VAL_ORIG'].sum().reset_index()
+    df_sorted = df_grouped.sort_values(by=['ID_PRELIEVO', 'VAL_ORIG'], ascending=[True, False])
 
-            with tab2:
-                st.subheader("1. Prima Assegnazione")
-                
-                # Raggruppa i dati
-                df_grouped = df_dati.groupby(['ID_PRELIEVO', 'ENTE_EMIT', 'DES_ENTE'])['VAL_ORIG'].sum().reset_index()
-                df_sorted = df_grouped.sort_values(by=['ID_PRELIEVO', 'VAL_ORIG'], ascending=[True, False])
-                
-                # Funzione di assegnazione principale
-                def trova_assegnatario(group):
-                    for index, row in group.iterrows():
-                        if row['ENTE_EMIT'] not in codici_esclusi:
-                            return pd.Series({
-                                'ENTE_ASSEGNATARIO_COD': row['ENTE_EMIT'],
-                                'ENTE_ASSEGNATARIO_DES': row['DES_ENTE'],
-                                'VAL_ORIG_ASSEGNATARIO': row['VAL_ORIG']
-                            })
-                    return pd.Series({
-                        'ENTE_ASSEGNATARIO_COD': None,
-                        'ENTE_ASSEGNATARIO_DES': 'Nessun Assegnatario Valido',
-                        'VAL_ORIG_ASSEGNATARIO': 0
-                    })
-                
-                # Rimosso include_groups=False per garantire piena compatibilità
-                risultati_assegnazione = df_sorted.groupby('ID_PRELIEVO').apply(trova_assegnatario).reset
-                st.markdown("**Risultati prima assegnazione (prime 10 righe):**")
-                st.dataframe(risultati_assegnazione.head(10), use_container_width=True)
+    # Funzione di assegnazione principale
+    def trova_assegnatario(group):
+        for index, row in group.iterrows():
+            if row['ENTE_EMIT'] not in codici_esclusi:
+                return pd.Series({
+                    'ENTE_ASSEGNATARIO_COD': row['ENTE_EMIT'],
+                    'ENTE_ASSEGNATARIO_DES': row['DES_ENTE'],
+                    'VAL_ORIG_ASSEGNATARIO': row['VAL_ORIG']
+                })
+        return pd.Series({
+            'ENTE_ASSEGNATARIO_COD': None,
+            'ENTE_ASSEGNATARIO_DES': 'Nessun Assegnatario Valido',
+            'VAL_ORIG_ASSEGNATARIO': 0
+        })
 
-                # 2. Logica di Riassegnazione
-                risultati_assegnazione_reassigned = risultati_assegnazione.copy()
-                unassigned_pallets_initial = risultati_assegnazione_reassigned[risultati_assegnazione_reassigned['ENTE_ASSEGNATARIO_COD'].isnull()]
+    # reset_index() corretto (evitando sia include_groups che .reset())
+    risultati_assegnazione = df_sorted.groupby('ID_PRELIEVO').apply(trova_assegnatario).reset_index()
 
-                st.subheader("2. Riassegnazione Pallet Non Assegnati")
-                st.info(f"Pallet inizialmente non assegnati: **{len(unassigned_pallets_initial)}**")
+    st.markdown("**Risultati prima assegnazione (prime 10 righe):**")
+    st.dataframe(risultati_assegnazione.head(10), use_container_width=True)
 
-                if not unassigned_pallets_initial.empty:
-                    pallet_details_per_category = df_dati.groupby(['ID_PRELIEVO', 'COD_CATEGORY'])['VAL_ORIG'].sum().reset_index().rename(columns={'VAL_ORIG': 'Pallet_Category_Value'})
+    # 2. Logica di Riassegnazione
+    risultati_assegnazione_reassigned = risultati_assegnazione.copy()
+    unassigned_pallets_initial = risultati_assegnazione_reassigned[risultati_assegnazione_reassigned['ENTE_ASSEGNATARIO_COD'].isnull()]
 
-                    unassigned_pallet_data = pd.merge(
-                        unassigned_pallets_initial[['ID_PRELIEVO']],
-                        pallet_details_per_category,
-                        on='ID_PRELIEVO',
-                        how='left'
-                    )
+    st.subheader("2. Riassegnazione Pallet Non Assegnati")
+    st.info(f"Pallet inizialmente non assegnati: **{len(unassigned_pallets_initial)}**")
 
-                    total_ceded_cat = df_dati.groupby(['ENTE_EMIT', 'COD_CATEGORY'])['VAL_ORIG'].sum().reset_index().rename(columns={'VAL_ORIG': 'Ceded_Category_Value'})
+    if not unassigned_pallets_initial.empty:
+        pallet_details_per_category = df_dati.groupby(['ID_PRELIEVO', 'COD_CATEGORY'])['VAL_ORIG'].sum().reset_index().rename(columns={'VAL_ORIG': 'Pallet_Category_Value'})
 
-                    assigned_pallets = risultati_assegnazione_reassigned[risultati_assegnazione_reassigned['ENTE_ASSEGNATARIO_COD'].notnull()]
-                    assigned_pallets_with_cat = pd.merge(
-                        assigned_pallets[['ID_PRELIEVO', 'ENTE_ASSEGNATARIO_COD']],
-                        pallet_details_per_category,
-                        on='ID_PRELIEVO',
-                        how='left'
-                    )
+        unassigned_pallet_data = pd.merge(
+            unassigned_pallets_initial[['ID_PRELIEVO']],
+            pallet_details_per_category,
+            on='ID_PRELIEVO',
+            how='left'
+        )
 
-                    total_received_cat = assigned_pallets_with_cat.groupby(['ENTE_ASSEGNATARIO_COD', 'COD_CATEGORY'])['Pallet_Category_Value'].sum().reset_index().rename(columns={'Pallet_Category_Value': 'Received_Category_Value', 'ENTE_ASSEGNATARIO_COD': 'ENTE_EMIT'})
+        total_ceded_cat = df_dati.groupby(['ENTE_EMIT', 'COD_CATEGORY'])['VAL_ORIG'].sum().reset_index().rename(columns={'VAL_ORIG': 'Ceded_Category_Value'})
 
-                    store_cat_balance = pd.merge(total_ceded_cat, total_received_cat, on=['ENTE_EMIT', 'COD_CATEGORY'], how='outer').fillna(0)
-                    store_cat_balance['Balance_Category'] = store_cat_balance['Ceded_Category_Value'] - store_cat_balance['Received_Category_Value']
-                    store_cat_balance = store_cat_balance[~store_cat_balance['ENTE_EMIT'].isin(codici_esclusi)]
+        assigned_pallets = risultati_assegnazione_reassigned[risultati_assegnazione_reassigned['ENTE_ASSEGNATARIO_COD'].notnull()]
+        assigned_pallets_with_cat = pd.merge(
+            assigned_pallets[['ID_PRELIEVO', 'ENTE_ASSEGNATARIO_COD']],
+            pallet_details_per_category,
+            on='ID_PRELIEVO',
+            how='left'
+        )
 
-                    st.markdown("**Bilancio per Ente e Categoria (prime 10 righe):**")
-                    st.dataframe(store_cat_balance.head(10), use_container_width=True)
+        total_received_cat = assigned_pallets_with_cat.groupby(['ENTE_ASSEGNATARIO_COD', 'COD_CATEGORY'])['Pallet_Category_Value'].sum().reset_index().rename(columns={'Pallet_Category_Value': 'Received_Category_Value', 'ENTE_ASSEGNATARIO_COD': 'ENTE_EMIT'})
 
-                    reassigned_records = []
-                    for index, pallet_row in unassigned_pallet_data.iterrows():
-                        pallet_id = pallet_row['ID_PRELIEVO']
-                        pallet_category = pallet_row['COD_CATEGORY']
-                        pallet_value = pallet_row['Pallet_Category_Value']
+        store_cat_balance = pd.merge(total_ceded_cat, total_received_cat, on=['ENTE_EMIT', 'COD_CATEGORY'], how='outer').fillna(0)
+        store_cat_balance['Balance_Category'] = store_cat_balance['Ceded_Category_Value'] - store_cat_balance['Received_Category_Value']
+        store_cat_balance = store_cat_balance[~store_cat_balance['ENTE_EMIT'].isin(codici_esclusi)]
 
-                        candidate_stores = store_cat_balance[
-                            (store_cat_balance['COD_CATEGORY'] == pallet_category) &
-                            (store_cat_balance['Balance_Category'] >= pallet_value)
-                        ].sort_values(by='Balance_Category', ascending=False)
+        st.markdown("**Bilancio per Ente e Categoria (prime 10 righe):**")
+        st.dataframe(store_cat_balance.head(10), use_container_width=True)
 
-                        if not candidate_stores.empty:
-                            chosen_assignee = candidate_stores.iloc[0]
-                            chosen_ente_cod = chosen_assignee['ENTE_EMIT']
-                            chosen_ente_des = df_dati[df_dati['ENTE_EMIT'] == chosen_ente_cod]['DES_ENTE'].iloc[0]
+        reassigned_records = []
+        for index, pallet_row in unassigned_pallet_data.iterrows():
+            pallet_id = pallet_row['ID_PRELIEVO']
+            pallet_category = pallet_row['COD_CATEGORY']
+            pallet_value = pallet_row['Pallet_Category_Value']
 
-                            reassigned_records.append({
-                                'ID_PRELIEVO': pallet_id,
-                                'ENTE_ASSEGNATARIO_COD': chosen_ente_cod,
-                                'ENTE_ASSEGNATARIO_DES': chosen_ente_des,
-                                'VAL_ORIG_ASSEGNATARIO': pallet_value
-                            })
+            candidate_stores = store_cat_balance[
+                (store_cat_balance['COD_CATEGORY'] == pallet_category) &
+                (store_cat_balance['Balance_Category'] >= pallet_value)
+            ].sort_values(by='Balance_Category', ascending=False)
 
-                            store_cat_balance.loc[
-                                (store_cat_balance['ENTE_EMIT'] == chosen_ente_cod) &
-                                (store_cat_balance['COD_CATEGORY'] == pallet_category),
-                                'Balance_Category'
-                            ] -= pallet_value
+            if not candidate_stores.empty:
+                chosen_assignee = candidate_stores.iloc[0]
+                chosen_ente_cod = chosen_assignee['ENTE_EMIT']
+                chosen_ente_des = df_dati[df_dati['ENTE_EMIT'] == chosen_ente_cod]['DES_ENTE'].iloc[0]
 
-                    if reassigned_records:
-                        df_reassigned = pd.DataFrame(reassigned_records)
-                        st.success(f"🎉 Riassegnati con successo **{len(df_reassigned)}** pallet!")
-                        st.dataframe(df_reassigned, use_container_width=True)
+                reassigned_records.append({
+                    'ID_PRELIEVO': pallet_id,
+                    'ENTE_ASSEGNATARIO_COD': chosen_ente_cod,
+                    'ENTE_ASSEGNATARIO_DES': chosen_ente_des,
+                    'VAL_ORIG_ASSEGNATARIO': pallet_value
+                })
 
-                        for idx, row in df_reassigned.iterrows():
-                            pallet_id = row['ID_PRELIEVO']
-                            risultati_assegnazione_reassigned.loc[
-                                risultati_assegnazione_reassigned['ID_PRELIEVO'] == pallet_id,
-                                ['ENTE_ASSEGNATARIO_COD', 'ENTE_ASSEGNATARIO_DES', 'VAL_ORIG_ASSEGNATARIO']
-                            ] = [row['ENTE_ASSEGNATARIO_COD'], row['ENTE_ASSEGNATARIO_DES'], row['VAL_ORIG_ASSEGNATARIO']]
-                    else:
-                        st.warning("Nessun pallet è stato riassegnato con la logica del bilancio.")
+                store_cat_balance.loc[
+                    (store_cat_balance['ENTE_EMIT'] == chosen_ente_cod) &
+                    (store_cat_balance['COD_CATEGORY'] == pallet_category),
+                    'Balance_Category'
+                ] -= pallet_value
 
-                st.metric("Pallet ancora non assegnati alla fine", risultati_assegnazione_reassigned['ENTE_ASSEGNATARIO_COD'].isnull().sum())
+        if reassigned_records:
+            df_reassigned = pd.DataFrame(reassigned_records)
+            st.success(f"🎉 Riassegnati con successo **{len(df_reassigned)}** pallet!")
+            st.dataframe(df_reassigned, use_container_width=True)
+
+            for idx, row in df_reassigned.iterrows():
+                pallet_id = row['ID_PRELIEVO']
+                risultati_assegnazione_reassigned.loc[
+                    risultati_assegnazione_reassigned['ID_PRELIEVO'] == pallet_id,
+                    ['ENTE_ASSEGNATARIO_COD', 'ENTE_ASSEGNATARIO_DES', 'VAL_ORIG_ASSEGNATARIO']
+                ] = [row['ENTE_ASSEGNATARIO_COD'], row['ENTE_ASSEGNATARIO_DES'], row['VAL_ORIG_ASSEGNATARIO']]
+        else:
+            st.warning("Nessun pallet è stato riassegnato con la logica del bilancio.")
+
+    st.metric("Pallet ancora non assegnati alla fine", risultati_assegnazione_reassigned['ENTE_ASSEGNATARIO_COD'].isnull().sum())
 
             with tab3:
                 st.subheader("📥 Download File Finale")
