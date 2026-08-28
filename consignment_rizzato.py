@@ -89,7 +89,7 @@ if uploaded_esclusi is not None and uploaded_dati is not None:
                 # Raggruppa i dati
                 df_grouped = df_dati.groupby(['ID_PRELIEVO', 'ENTE_EMIT', 'DES_ENTE'])['VAL_ORIG'].sum().reset_index()
                 df_sorted = df_grouped.sort_values(by=['ID_PRELIEVO', 'VAL_ORIG'], ascending=[True, False])
-
+                
                 # Funzione di assegnazione principale
                 def trova_assegnatario(group):
                     for index, row in group.iterrows():
@@ -104,9 +104,9 @@ if uploaded_esclusi is not None and uploaded_dati is not None:
                         'ENTE_ASSEGNATARIO_DES': 'Nessun Assegnatario Valido',
                         'VAL_ORIG_ASSEGNATARIO': 0
                     })
-
-                risultati_assegnazione = df_sorted.groupby('ID_PRELIEVO', include_groups=False).apply(trova_assegnatario).reset_index()
-
+                
+                # Rimosso include_groups=False per garantire piena compatibilità
+                risultati_assegnazione = df_sorted.groupby('ID_PRELIEVO').apply(trova_assegnatario).reset
                 st.markdown("**Risultati prima assegnazione (prime 10 righe):**")
                 st.dataframe(risultati_assegnazione.head(10), use_container_width=True)
 
